@@ -6,6 +6,18 @@ from app.bot.handlers import bot, dp
 from app.services.tmdb import tmdb_service
 from app.db.session import Base, engine
 from app.models.models import User, UserMovie
+from app.api.movies import router as movies_router
+from app.api.user_movies import router as user_movies_router
+
+async def start_bot():
+    try:
+        await bot.delete_webhook(drop_pending_updates=True)
+    except Exception as e:
+        print(f"Не удалось сбросить webhook, запускаю polling всё равно: {e}", flush=True)
+
+    print("Бот успешно запущен, слушаю сообщения", flush=True)
+    # uvicorn сам обрабатывает SIGINT/SIGTERM, поэтому сигналы aiogram отключаем
+    await dp.start_polling(bot, handle_signals=False)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,8 +25,8 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     print("База данных успешно создана")
 
-    polling_task = asyncio.create_task(dp.start_polling(bot))
-    print("Бот успешно запущен")
+    polling_task = asyncio.create_task(start_bot())
+
     yield
     print("Остановка бота...")
     polling_task.cancel()
@@ -30,7 +42,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Movie Mini App API",
             description="Backend API для Telegram Mini App с интеграцией TMDB",
-            version="0.1.0",
+            version="0.2.0",
             lifespan=lifespan)
 
 app.add_middleware(
@@ -41,18 +53,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(movies_router)
+app.include_router(user_movies_router)
+
 @app.get("/health")
 async def health_check():
     """Проверочный эндпоинт для проверки работоспособности API"""
     return {"status": "ok", "message": "API работает в штатном режиме"}
-
-@app.get("/api/movies/test")
-async def test_tmdb():
-    """Тестовый эндпоинт для проверки интеграции с TMDB"""
-    data = await tmdb_service.get_popular_movies()
-    return {
-        "status": "success",
-        "total_results": data.get("total_results"),
-        "first_movie": data.get("results", [{}])[0].get("title"),
-    }
-
