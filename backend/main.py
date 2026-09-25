@@ -21,14 +21,11 @@ async def start_bot():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("База данных успешно создана")
 
     polling_task = asyncio.create_task(start_bot())
 
     yield
-    print("Остановка бота...")
+    print("Остановка бота...", flush = True)
     polling_task.cancel()
     try:
         await polling_task
@@ -36,7 +33,7 @@ async def lifespan(app: FastAPI):
         pass
     await bot.session.close()
     await engine.dispose()
-    print("База данных и бот успешно остановлены")
+    print("База данных и бот успешно остановлены" flush = True)
 
 
 
