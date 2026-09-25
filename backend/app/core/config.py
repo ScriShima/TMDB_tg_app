@@ -6,5 +6,6 @@ class Settings(BaseSettings):
     bot_token: str
     tmdb_api_key: str
     database_url: str
+    app_env: str = "development"
 
 settings = Settings()

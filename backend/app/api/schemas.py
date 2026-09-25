@@ -3,7 +3,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class MovieActionSchema(BaseModel):
-    user_id: int
     tmdb_movie_id: int
     is_watched: bool = False
     rating: Optional[int] = Field(None, ge=1, le=10)
