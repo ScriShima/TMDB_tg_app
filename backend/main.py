@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
         pass
     await bot.session.close()
     await engine.dispose()
-    print("База данных и бот успешно остановлены" flush = True)
+    print("База данных и бот успешно остановлены", flush = True)
 
 
 

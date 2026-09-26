@@ -3,9 +3,14 @@ import random
 from app.core.config import settings
 from typing import Optional
 from app.core.config import settings
+from asyncache import cached
+from cachetools import TTLCache
 
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
+
+genres_cache = TTLCache(maxsize=10, ttl=86400)
+popular_cache = TTLCache(maxsize=50, ttl=3600)
 
 class TMDBService:
     def __init__(self):
@@ -27,6 +32,7 @@ class TMDBService:
             response.raise_for_status()
             return response.json()
 
+    @cached(popular_cache)
     async def get_popular_movies(self, page:int = 1) -> dict:
         """Популярные фильмы"""
         return await self._get("/movie/popular", {"page": page})
@@ -35,6 +41,7 @@ class TMDBService:
         """Подробная информация о фильме"""
         return await self._get(f"/movie/{movie_id}")
 
+    @cached(genres_cache)
     async def get_genres(self) -> list[dict]:
         """Жанры"""
         data = await self._get("/genre/movie/list")
