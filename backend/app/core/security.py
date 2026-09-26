@@ -27,7 +27,7 @@ def validate_telegram_data(init_data: str) -> TelegramUser:
 
     try:
         parsed_data = dict(parse_qsl(init_data, keep_blank_values=True))
-    except Exception: 
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Некорректный формат данных авторизации",
@@ -39,7 +39,7 @@ def validate_telegram_data(init_data: str) -> TelegramUser:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Отсутствует хэш авторизации",
         )
-    
+
     try:
         auth_date = int(parsed_data.get("auth_date", "0"))
     except ValueError:
@@ -87,7 +87,7 @@ def validate_telegram_data(init_data: str) -> TelegramUser:
 
 _bearer = HTTPBearer(
     auto_error=False,
-    description="В development для Swagger введите dev-test. Префикс Bearer подставится сам.",
+    description="Заголовок Authorization: Telegram initData. Префикс Bearer подставится сам.",
 )
 
 
@@ -96,11 +96,11 @@ async def get_current_user(
 ) -> TelegramUser:
     """Зависимость FastAPI для получения текущего пользователя"""
     token = credentials.credentials.strip() if credentials else ""
-    if settings.app_env == "development" and token in {"dev-test", "Bearer dev-test"}:
+    if settings.dev_auth_enabled and token == "dev-test":
         return TelegramUser(
-            id=816896370,
-            first_name="Nikita",
-            username="N1kit_OS",
+            id=settings.dev_user_id,
+            first_name="Dev",
+            username="dev",
         )
     if not token:
         raise HTTPException(

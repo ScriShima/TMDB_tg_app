@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router, Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
@@ -6,11 +8,13 @@ from sqlalchemy import select
 from app.db.session import async_session_maker
 from app.models.models import User
 
+logger = logging.getLogger("movie_app.bot")
+
 bot_router = Router()
 bot = Bot(token=settings.bot_token)
 dp = Dispatcher()
 
-WEBAPP_URL = "https://example.com"
+WEBAPP_URL = settings.webapp_url
 
 @bot_router.message(CommandStart())
 async def cmd_start(message: Message):
@@ -26,7 +30,7 @@ async def cmd_start(message: Message):
             user = User(id=tg_user.id, first_name=tg_user.first_name, username=tg_user.username)
             session.add(user)
             await session.commit()
-            print(f" Зарегистрирован новый пользователь: {tg_user.first_name} (ID: {tg_user.id})")
+            logger.info("Зарегистрирован новый пользователь: %s (ID: %s)", tg_user.first_name, tg_user.id)
         else:
             user.first_name = tg_user.first_name
             user.username = tg_user.username
