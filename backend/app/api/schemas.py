@@ -19,3 +19,10 @@ class UserMovieResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserStatsResponse(BaseModel):
+    total_saved: int
+    watched_count: int
+    planned_count: int
+    average_rating: Optional[float] = None
+    
