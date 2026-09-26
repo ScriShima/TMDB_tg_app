@@ -25,6 +25,7 @@ class UserMovie(Base):
     tmdb_movie_id: Mapped[int] = mapped_column(Integer, index=True)
     title: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     poster_path: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
+    runtime: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     is_watched: Mapped[bool] = mapped_column(Boolean, default=False)
     rating: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

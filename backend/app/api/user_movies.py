@@ -13,6 +13,8 @@ from app.api.schemas import (
     MoviePatchSchema,
     UserMovieResponse,
     UserMovieListResponse,
+    UserMovieStatusItem,
+    UserMovieStatusListResponse,
     UserStatsResponse,
 )
 from app.core.security import get_current_user, TelegramUser
@@ -27,7 +29,11 @@ async def _movie_snapshot(movie_id: int) -> dict:
         if exc.response.status_code == 404:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Фильм не найден")
         raise
-    return {"title": data.get("title"), "poster_path": data.get("poster_path")}
+    return {
+        "title": data.get("title"),
+        "poster_path": data.get("poster_path"),
+        "runtime": data.get("runtime"),
+    }
 
 async def _ensure_user(db: AsyncSession, current_user: TelegramUser) -> User:
     res = await db.execute(select(User).where(User.id == current_user.id))
@@ -74,10 +80,11 @@ async def set_user_movie(
     data = payload.model_dump(exclude_unset=True)
     data.pop("tmdb_movie_id")
 
-    if "title" not in data or "poster_path" not in data:
+    if "title" not in data or "poster_path" not in data or "runtime" not in data:
         snapshot = await _movie_snapshot(payload.tmdb_movie_id)
         data.setdefault("title", snapshot["title"])
         data.setdefault("poster_path", snapshot["poster_path"])
+        data.setdefault("runtime", snapshot["runtime"])
 
     res = await db.execute(
         select(UserMovie).where(
@@ -177,9 +184,13 @@ async def get_user_stats(
             func.count(UserMovie.id),
             func.count(UserMovie.id).filter(UserMovie.is_watched.is_(True)),
             func.avg(UserMovie.rating),
+            func.coalesce(
+                func.sum(UserMovie.runtime).filter(UserMovie.is_watched.is_(True)),
+                0,
+            ),
         ).where(UserMovie.user_id == current_user.id)
     )
-    total_count, watched_count, avg_rating = row.one()
+    total_count, watched_count, avg_rating, total_runtime = row.one()
     total_count = total_count or 0
     watched_count = watched_count or 0
 
@@ -188,7 +199,24 @@ async def get_user_stats(
         watched_count=watched_count,
         planned_count=total_count - watched_count,
         average_rating=round(float(avg_rating), 1) if avg_rating is not None else None,
+        total_runtime_minutes=int(total_runtime or 0),
     )
+
+@router.get("/statuses", response_model=UserMovieStatusListResponse)
+async def get_movie_statuses(
+    current_user: TelegramUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Статусы библиотеки для бейджей в каталоге"""
+    res = await db.execute(
+        select(UserMovie.tmdb_movie_id, UserMovie.is_watched, UserMovie.rating)
+        .where(UserMovie.user_id == current_user.id)
+    )
+    items = [
+        UserMovieStatusItem(tmdb_movie_id=movie_id, is_watched=is_watched, rating=rating)
+        for movie_id, is_watched, rating in res.all()
+    ]
+    return UserMovieStatusListResponse(items=items)
 
 @router.delete("/{tmdb_movie_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_movie(

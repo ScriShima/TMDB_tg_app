@@ -9,6 +9,7 @@ class MovieActionSchema(BaseModel):
     comment: Optional[str] = Field(None, max_length=500)
     title: Optional[str] = Field(None, max_length=300)
     poster_path: Optional[str] = Field(None, max_length=300)
+    runtime: Optional[int] = None
 
 class MoviePatchSchema(BaseModel):
     is_watched: Optional[bool] = None
@@ -16,6 +17,7 @@ class MoviePatchSchema(BaseModel):
     comment: Optional[str] = Field(None, max_length=500)
     title: Optional[str] = Field(None, max_length=300)
     poster_path: Optional[str] = Field(None, max_length=300)
+    runtime: Optional[int] = None
 
 class UserMovieResponse(BaseModel):
     id: int
@@ -23,6 +25,7 @@ class UserMovieResponse(BaseModel):
     tmdb_movie_id: int
     title: Optional[str]
     poster_path: Optional[str]
+    runtime: Optional[int] = None
     is_watched: bool
     rating: Optional[int]
     comment: Optional[str]
@@ -36,8 +39,17 @@ class UserMovieListResponse(BaseModel):
     limit: int
     offset: int
 
+class UserMovieStatusItem(BaseModel):
+    tmdb_movie_id: int
+    is_watched: bool
+    rating: Optional[int] = None
+
+class UserMovieStatusListResponse(BaseModel):
+    items: list[UserMovieStatusItem]
+
 class UserStatsResponse(BaseModel):
     total_saved: int
     watched_count: int
     planned_count: int
     average_rating: Optional[float] = None
+    total_runtime_minutes: int = 0
