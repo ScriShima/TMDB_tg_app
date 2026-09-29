@@ -6,6 +6,7 @@ import { DiscoverPage } from './pages/DiscoverPage';
 import { RandomPage } from './pages/RandomPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { MovieDetailModal } from './components/MovieDetailModal';
 
 export const App: React.FC = () => {
   const { activeTab, fetchStatuses } = useMovieStore();
@@ -44,6 +45,7 @@ export const App: React.FC = () => {
         {renderCurrentPage()}
       </main>
       <BottomNav />
+      <MovieDetailModal />
     </div>
   );
 };
