@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Star, Bookmark, Check, Calendar, Film } from 'lucide-react';
+import { X, Star, Check, Calendar} from 'lucide-react';
 import { useMovieStore } from '../store/useMovieStore';
 import { apiClient } from '../api/client';
 import type { Movie } from '../types/movie';
